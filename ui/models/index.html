@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Model Yönetimi</title>
+    <style>
+      :root {
+        --bg: #0b1220;
+        --card: #0f172a;
+        --card-2: #111827;
+        --fg: #e5e7eb;
+        --muted: #94a3b8;
+        --primary: #22d3ee;
+        --primary-600: #06b6d4;
+        --border: #1f2937;
+        --accent: #1e293b;
+        --danger: #f43f5e;
+      }
+      html, body { height: 100%; }
+      body {
+        margin: 0;
+        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+        color: var(--fg);
+        background: radial-gradient(1200px 600px at 10% -10%, rgba(34,211,238,.15), transparent 60%),
+                    radial-gradient(1200px 600px at 110% -10%, rgba(99,102,241,.14), transparent 60%),
+                    var(--bg);
+        background-attachment: fixed, fixed, fixed;
+      }
+      .container { max-width: 980px; margin: 0 auto; padding: 32px 20px 110px; }
+      .header { text-align: center; margin-bottom: 26px; }
+      .brand {
+        font-weight: 900; letter-spacing: .3px; font-size: 38px; line-height: 1.1; margin: 0 auto;
+        background: linear-gradient(90deg, var(--primary), #a78bfa, var(--primary));
+        background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent;
+        animation: gradientShift 8s linear infinite; text-shadow: 0 6px 24px rgba(34,211,238,.18);
+      }
+      @keyframes gradientShift { 0%{background-position: 0% 50%} 100%{background-position: 200% 50%} }
+      .sub {
+        position: relative; text-align: center; margin-top: 12px;
+        font-size: 16px; line-height: 1.5; max-width: 780px; margin-left: auto; margin-right: auto;
+        background: linear-gradient(90deg, #93c5fd, #c084fc, var(--primary));
+        background-size: 200% 100%;
+        -webkit-background-clip: text; background-clip: text; color: transparent;
+        animation: gradientShift 12s linear infinite; opacity: .95;
+      }
+      .sub::after {
+        content: ""; display: block; height: 2px; width: 180px; margin: 10px auto 0;
+        background: linear-gradient(90deg, transparent, var(--primary), #a78bfa, transparent);
+        filter: saturate(120%); opacity: .8; border-radius: 999px;
+      }
+      .nav { margin-top: 12px; text-align: center; }
+      .nav a { color: var(--fg); text-decoration: none; font-weight: 700; opacity: .9; }
+      .nav a:hover { opacity: 1; }
+
+      .card { background: linear-gradient(180deg, var(--card), var(--card-2)); border: 1px solid var(--border); border-radius: 14px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,.25); }
+      .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+      input[type="text"] {
+        flex: 1 1 320px; min-width: 240px; padding: 12px 14px; font-size: 14px; color: var(--fg);
+        background: #0b1220; border: 1px solid var(--border); border-radius: 12px; outline: none; transition: border-color .15s ease;
+      }
+      input[type="text"]:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(34,211,238,.15); }
+
+      .btn {
+        appearance: none; border: 1px solid var(--border); border-radius: 12px; padding: 10px 14px; cursor: pointer;
+        font-weight: 700; letter-spacing: .2px; color: var(--fg); background: #0b1220;
+        transition: background-color .15s ease, color .15s ease, border-color .15s ease, transform .06s ease;
+      }
+      .btn:hover { transform: translateY(-1px); }
+      .btn:active { transform: translateY(0); }
+      .btn:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(255,255,255,.06); }
+      .btn-primary { border-color: var(--primary); color: var(--primary); background: rgba(34,211,238,.08); }
+      .btn-primary:hover { background: rgba(34,211,238,.18); }
+      .btn-primary:active { background: rgba(34,211,238,.24); }
+      .btn-danger { border-color: var(--danger); color: #fb7185; background: rgba(244,63,94,.08); }
+      .btn-danger:hover { background: rgba(244,63,94,.16); }
+      .btn-danger:active { background: rgba(244,63,94,.22); }
+      .btn[disabled] { opacity: .6; cursor: not-allowed; }
+      .btn.loading { position: relative; color: transparent; }
+      .btn.loading::after { content: ""; position: absolute; inset: 0; margin: auto; width: 16px; height: 16px; border-radius: 50%; border: 2px solid rgba(255,255,255,.6); border-top-color: rgba(255,255,255,.1); animation: spin .8s linear infinite; }
+      @keyframes spin { to { transform: rotate(360deg); } }
+
+      .muted { color: var(--muted); font-size: 13px; }
+      .status { margin-top: 8px; min-height: 18px; transition: all .2s ease; }
+      .status.error {
+        color: #fecaca;
+        background: rgba(244,63,94,.10);
+        border: 1px solid rgba(244,63,94,.35);
+        padding: 10px 12px;
+        border-radius: 12px;
+        width: fit-content;
+        margin: 12px auto 0;
+        box-shadow: 0 10px 20px rgba(244,63,94,.12);
+      }
+      table { width: 100%; border-collapse: collapse; margin-top: 18px; overflow: hidden; border-radius: 12px; border: 1px solid var(--border); }
+      thead th { background: #0b1220; color: #cbd5e1; font-size: 12px; text-transform: uppercase; letter-spacing: .6px; }
+      th, td { text-align: left; padding: 12px 12px; border-bottom: 1px solid var(--border); font-size: 14px; }
+      tbody tr:nth-child(even) { background: #0c1526; }
+       td.actions { text-align: left; }
+      .pager { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 12px; }
+      .pager button { appearance: none; border: 1px solid var(--border); border-radius: 10px; padding: 6px 10px; background: #0b1220; color: var(--fg); cursor: pointer; }
+      .pager button[disabled] { opacity: .6; cursor: not-allowed; }
+      .pager .info { color: var(--muted); font-size: 12px; }
+
+      footer { position: fixed; left: 0; right: 0; bottom: 0; z-index: 50; color: var(--muted); font-size: 12px; text-align: center; padding: 10px 16px; background: rgba(15,23,42,.6); border-top: 1px solid var(--border); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); box-shadow: 0 -10px 30px rgba(0,0,0,.25); }
+      footer a { color: var(--fg); text-decoration: none; font-weight: 800; background-image: linear-gradient(90deg, var(--primary), #a78bfa); background-size: 100% 2px; background-position: 0 100%; background-repeat: no-repeat; padding-bottom: 2px; }
+      footer a:hover { filter: brightness(1.1); }
+
+       /* Modal */
+       .modal-backdrop { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; z-index: 100; background: rgba(0,0,0,.5); backdrop-filter: blur(2px); }
+       .modal { width: 92%; max-width: 440px; background: linear-gradient(180deg, var(--card), var(--card-2)); border: 1px solid var(--border); border-radius: 14px; padding: 18px; box-shadow: 0 20px 50px rgba(0,0,0,.35); }
+       .modal h3 { margin: 0 0 8px; font-size: 18px; }
+       .modal p { margin: 0 0 14px; color: var(--muted); font-size: 14px; }
+       .modal .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <div class="brand">Model Yönetimi</div>
+        <div class="sub">Hugging Face model adını ekleyin, listeyi yönetin ve gerekirse kaldırın.</div>
+        <div class="nav"><a href="/">← Token Hesaplama</a></div>
+      </div>
+
+      <div class="card">
+        <div class="row">
+          <input id="modelName" type="text" placeholder="Örn: gpt2 / bert-base-uncased" />
+          <button id="addBtn" class="btn btn-primary">Model Ekle</button>
+        </div>
+        <div id="status" class="status muted"></div>
+
+        <table id="modelsTable" style="display:none;">
+          <thead>
+            <tr>
+              <th style="width:60%;">Model</th>
+              <th>ID</th>
+              <th class="actions">İşlem</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <div id="pager" class="pager" style="display:none;">
+          <button id="prevPage">‹ Önceki</button>
+          <span class="info" id="pageInfo"></span>
+          <button id="nextPage">Sonraki ›</button>
+        </div>
+      </div>
+
+      <footer>
+        Developed by <a href="https://github.com/ryilkici" target="_blank" rel="noreferrer">Recep Yılkıcı</a>
+      </footer>
+    </div>
+
+    <!-- Confirm Delete Modal -->
+    <div id="confirmModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="confirmTitle" aria-describedby="confirmDesc">
+      <div class="modal">
+        <h3 id="confirmTitle">Modeli Sil</h3>
+        <p id="confirmDesc">Aşağıdaki model silinecek ve yerel cache temizlenecek:</p>
+        <p style="margin-top:-6px; margin-bottom: 12px;"><strong id="modalModelName"></strong></p>
+        <div class="modal-actions">
+          <button id="cancelDeleteBtn" class="btn">İptal</button>
+          <button id="confirmDeleteBtn" class="btn btn-danger">Sil</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const input = document.getElementById('modelName');
+      const addBtn = document.getElementById('addBtn');
+      const statusEl = document.getElementById('status');
+      const table = document.getElementById('modelsTable');
+      const tbody = table.querySelector('tbody');
+      const pager = document.getElementById('pager');
+      const prevBtn = document.getElementById('prevPage');
+      const nextBtn = document.getElementById('nextPage');
+      const pageInfo = document.getElementById('pageInfo');
+
+      let listState = { items: [], page: 1, pageSize: 5 };
+
+      function renderListPage() {
+        const { items, page, pageSize } = listState;
+        const start = (page - 1) * pageSize;
+        const slice = items.slice(start, start + pageSize);
+        tbody.innerHTML = '';
+        for (const m of slice) {
+          const tr = document.createElement('tr');
+          const tdName = document.createElement('td');
+          const tdId = document.createElement('td');
+          const tdAct = document.createElement('td'); tdAct.className = 'actions';
+          tdName.textContent = m.name;
+          tdId.textContent = m.id;
+          const del = document.createElement('button');
+          del.className = 'btn btn-danger';
+          del.textContent = 'Sil';
+          del.addEventListener('click', () => openDeleteModal(m.name));
+          tdAct.appendChild(del);
+          tr.appendChild(tdName); tr.appendChild(tdId); tr.appendChild(tdAct);
+          tbody.appendChild(tr);
+        }
+        const totalPages = Math.max(1, Math.ceil(items.length / pageSize));
+        pageInfo.textContent = `Sayfa ${page} / ${totalPages}`;
+        prevBtn.disabled = page <= 1;
+        nextBtn.disabled = page >= totalPages;
+        table.style.display = items.length ? '' : 'none';
+        pager.style.display = items.length > pageSize ? '' : 'none';
+      }
+
+      prevBtn.addEventListener('click', () => {
+        if (listState.page > 1) { listState.page -= 1; renderListPage(); }
+      });
+      nextBtn.addEventListener('click', () => {
+        const totalPages = Math.max(1, Math.ceil(listState.items.length / listState.pageSize));
+        if (listState.page < totalPages) { listState.page += 1; renderListPage(); }
+      });
+
+      // Modal elements
+      const modalBackdrop = document.getElementById('confirmModal');
+      const modalNameEl = document.getElementById('modalModelName');
+      const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+      const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+      let pendingDelete = null;
+
+      function openDeleteModal(name) {
+        pendingDelete = name;
+        modalNameEl.textContent = name;
+        modalBackdrop.style.display = 'flex';
+        // focus first actionable item
+        confirmDeleteBtn.focus();
+      }
+      function closeDeleteModal() {
+        modalBackdrop.style.display = 'none';
+        pendingDelete = null;
+        confirmDeleteBtn.disabled = false;
+        confirmDeleteBtn.classList.remove('loading');
+      }
+      cancelDeleteBtn.addEventListener('click', closeDeleteModal);
+      modalBackdrop.addEventListener('click', (e) => { if (e.target === modalBackdrop) closeDeleteModal(); });
+      document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && modalBackdrop.style.display === 'flex') closeDeleteModal(); });
+
+      async function refreshList() {
+        statusEl.textContent = '';
+        statusEl.classList.remove('error');
+        tbody.innerHTML = '';
+        table.style.display = 'none';
+        try {
+          const res = await fetch('/models/list');
+          if (!res.ok) throw new Error('Liste alınamadı');
+          const data = await res.json(); // [{id, name}]
+          if (!Array.isArray(data) || data.length === 0) {
+            statusEl.textContent = 'Kayıtlı model yok.';
+            return;
+          }
+          listState = { items: data, page: 1, pageSize: 5 };
+          renderListPage();
+        } catch (e) {
+          statusEl.textContent = 'Bir hata oluştu.';
+        }
+      }
+
+      addBtn.addEventListener('click', async () => {
+        const name = (input.value || '').trim();
+        if (!name) { input.focus(); return; }
+        addBtn.disabled = true; addBtn.classList.add('loading'); statusEl.textContent = ''; statusEl.classList.remove('error');
+        try {
+          const res = await fetch('/models/add', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name }) });
+          if (!res.ok) throw new Error('Ekleme başarısız');
+          input.value = '';
+          await refreshList();
+        } catch (e) {
+          statusEl.textContent = 'Ekleme işleminde hata. Model adı geçerli olmalı ve benzersiz olmalı.';
+          statusEl.classList.add('error');
+        } finally {
+          addBtn.disabled = false; addBtn.classList.remove('loading');
+        }
+      });
+
+      // Hata mesajını, kullanıcı yazmaya başladığında temizle
+      input.addEventListener('input', () => {
+        statusEl.textContent = '';
+        statusEl.classList.remove('error');
+      });
+
+      // Confirm delete action
+      confirmDeleteBtn.addEventListener('click', async () => {
+        if (!pendingDelete) return;
+        confirmDeleteBtn.disabled = true; confirmDeleteBtn.classList.add('loading');
+        try {
+          const resp = await fetch('/models/delete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: pendingDelete }) });
+          if (!resp.ok) throw new Error('Silme başarısız');
+          await refreshList();
+          closeDeleteModal();
+        } catch (e) {
+          statusEl.textContent = 'Silme işleminde hata.';
+        } finally {
+          confirmDeleteBtn.disabled = false; confirmDeleteBtn.classList.remove('loading');
+        }
+      });
+
+      document.addEventListener('DOMContentLoaded', refreshList);
+    </script>
+  </body>
+</html>
+
+

@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Token Hesaplayıcı</title>
+    <style>
+      :root {
+        --bg: #0b1220;
+        --card: #0f172a;
+        --card-2: #111827;
+        --fg: #e5e7eb;
+        --muted: #94a3b8;
+        --primary: #22d3ee;
+        --primary-600: #06b6d4;
+        --border: #1f2937;
+        --accent: #1e293b;
+      }
+      html, body { height: 100%; }
+      body {
+        margin: 0;
+        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+        color: var(--fg);
+        background: radial-gradient(1200px 600px at 10% -10%, rgba(34,211,238,.15), transparent 60%),
+                    radial-gradient(1200px 600px at 110% -10%, rgba(99,102,241,.14), transparent 60%),
+                    var(--bg);
+        background-attachment: fixed, fixed, fixed;
+      }
+      .container {
+        max-width: 980px; margin: 0 auto; padding: 32px 20px 110px;
+      }
+      .header {
+        display: flex; align-items: center; justify-content: center; margin-bottom: 26px; text-align: center;
+      }
+      .brand {
+        font-weight: 900; letter-spacing: .3px; font-size: 42px; line-height: 1.1; margin: 0 auto;
+        background: linear-gradient(90deg, var(--primary), #a78bfa, var(--primary));
+        background-size: 200% 100%;
+        -webkit-background-clip: text; background-clip: text; color: transparent;
+        animation: gradientShift 8s linear infinite;
+        text-shadow: 0 6px 24px rgba(34,211,238,.18);
+      }
+      @keyframes gradientShift { 0%{background-position: 0% 50%} 100%{background-position: 200% 50%} }
+      .sub {
+        position: relative; text-align: center; margin-top: 12px;
+        font-size: 16px; line-height: 1.5; max-width: 780px; margin-left: auto; margin-right: auto;
+        background: linear-gradient(90deg, #93c5fd, #c084fc, var(--primary));
+        background-size: 200% 100%;
+        -webkit-background-clip: text; background-clip: text; color: transparent;
+        animation: gradientShift 12s linear infinite; opacity: .95;
+      }
+      .sub::after {
+        content: ""; display: block; height: 2px; width: 180px; margin: 10px auto 0;
+        background: linear-gradient(90deg, transparent, var(--primary), #a78bfa, transparent);
+        filter: saturate(120%); opacity: .8; border-radius: 999px;
+      }
+      .card {
+        background: linear-gradient(180deg, var(--card), var(--card-2));
+        border: 1px solid var(--border);
+        border-radius: 14px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,.25);
+      }
+      label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 8px; }
+      textarea {
+        width: 100%; min-height: 140px; padding: 12px 14px; font-size: 14px; color: var(--fg);
+        background: #0b1220; border: 1px solid var(--border); border-radius: 12px; resize: vertical; box-sizing: border-box;
+        outline: none; transition: border-color .15s ease;
+      }
+      textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(34,211,238,.15); }
+      .actions { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 12px; }
+      .btn {
+        appearance: none; border: 1px solid var(--primary); border-radius: 12px; padding: 10px 14px; cursor: pointer;
+        font-weight: 700; letter-spacing: .2px; color: var(--primary); background: rgba(34,211,238,.08);
+        transition: background-color .15s ease, color .15s ease, border-color .15s ease, transform .06s ease;
+      }
+      .btn:hover { transform: translateY(-1px); background: rgba(34,211,238,.18); }
+      .btn:active { transform: translateY(0); background: rgba(34,211,238,.24); }
+      .btn:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(34,211,238,.18); }
+      .btn[disabled] { opacity: .6; cursor: not-allowed; }
+      .btn.loading { position: relative; color: transparent; }
+      .btn.loading::after {
+        content: ""; position: absolute; inset: 0; display: inline-block; margin: auto; width: 16px; height: 16px; border-radius: 50%;
+        border: 2px solid rgba(255,255,255,.6); border-top-color: rgba(255,255,255,.1); animation: spin .8s linear infinite;
+      }
+      @keyframes spin { to { transform: rotate(360deg); } }
+      .muted { color: var(--muted); font-size: 13px; }
+      .status { margin-top: 8px; min-height: 18px; transition: all .2s ease; }
+      .status.error {
+        color: #fecaca;
+        background: rgba(244,63,94,.10);
+        border: 1px solid rgba(244,63,94,.35);
+        padding: 10px 12px;
+        border-radius: 12px;
+        width: fit-content;
+        margin: 12px auto 0;
+        box-shadow: 0 10px 20px rgba(244,63,94,.12);
+      }
+      .summary { margin-top: 14px; font-size: 13px; color: var(--muted); }
+      table { width: 100%; border-collapse: collapse; margin-top: 18px; overflow: hidden; border-radius: 12px; border: 1px solid var(--border); }
+      thead th { background: #0b1220; color: #cbd5e1; font-size: 12px; text-transform: uppercase; letter-spacing: .6px; }
+      th, td { text-align: left; padding: 12px 12px; border-bottom: 1px solid var(--border); font-size: 14px; }
+      tbody tr:nth-child(even) { background: #0c1526; }
+      td.tokens { text-align: left; font-variant-numeric: tabular-nums; }
+      .pager { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 12px; }
+      .pager button { appearance: none; border: 1px solid var(--border); border-radius: 10px; padding: 6px 10px; background: #0b1220; color: var(--fg); cursor: pointer; }
+      .pager button[disabled] { opacity: .6; cursor: not-allowed; }
+      .pager .info { color: var(--muted); font-size: 12px; }
+      footer {
+        position: fixed; left: 0; right: 0; bottom: 0; z-index: 50;
+        color: var(--muted); font-size: 12px; text-align: center;
+        padding: 10px 16px; background: rgba(15,23,42,.6);
+        border-top: 1px solid var(--border);
+        backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+        box-shadow: 0 -10px 30px rgba(0,0,0,.25);
+      }
+      footer a {
+        color: var(--fg); text-decoration: none; font-weight: 800;
+        background-image: linear-gradient(90deg, var(--primary), #a78bfa);
+        background-size: 100% 2px; background-position: 0 100%; background-repeat: no-repeat;
+        padding-bottom: 2px;
+      }
+      footer a:hover { filter: brightness(1.1); }
+      @media (max-width: 640px) { .actions { flex-direction: column; align-items: center; } }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <div>
+          <div class="brand">Token Hesaplayıcı</div>
+          <div class="sub">Metni girin, kayıtlı tüm modeller için token sayısını anında görün.</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <textarea id="text" placeholder="Metninizi buraya yazın..."></textarea>
+        <div class="actions">
+          <button id="calcBtn" class="btn">Hesapla</button>
+        </div>
+        <div id="status" class="status muted"></div>
+        <div id="summary" class="summary" style="display:none;"></div>
+
+        <table id="results" style="display:none;">
+          <thead>
+            <tr>
+              <th>Model</th>
+              <th class="tokens">Token</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+        <div id="pager" class="pager" style="display:none;">
+          <button id="prevPage">‹ Önceki</button>
+          <span class="info" id="pageInfo"></span>
+          <button id="nextPage">Sonraki ›</button>
+        </div>
+      </div>
+
+      <footer>
+        Developed by <a href="https://github.com/ryilkici" target="_blank">Recep Yılkıcı</a>
+      </footer>
+    </div>
+
+    <script>
+      const btn = document.getElementById('calcBtn');
+      const textEl = document.getElementById('text');
+      const statusEl = document.getElementById('status');
+      const table = document.getElementById('results');
+      const tbody = table.querySelector('tbody');
+      const summaryEl = document.getElementById('summary');
+      const pager = document.getElementById('pager');
+      const prevBtn = document.getElementById('prevPage');
+      const nextBtn = document.getElementById('nextPage');
+      const pageInfo = document.getElementById('pageInfo');
+
+      let resultsState = { items: [], page: 1, pageSize: 10 };
+
+      function renderResultsPage() {
+        const { items, page, pageSize } = resultsState;
+        const start = (page - 1) * pageSize;
+        const slice = items.slice(start, start + pageSize);
+        tbody.innerHTML = '';
+        for (const r of slice) {
+          const tr = document.createElement('tr');
+          const nameTd = document.createElement('td');
+          const tokTd = document.createElement('td'); tokTd.className = 'tokens';
+          nameTd.textContent = r.name;
+          tokTd.textContent = r.error ? 'Hata' : (r.tokens ?? '—');
+          tr.appendChild(nameTd); tr.appendChild(tokTd);
+          tbody.appendChild(tr);
+        }
+        const totalPages = Math.max(1, Math.ceil(items.length / pageSize));
+        pageInfo.textContent = `Sayfa ${page} / ${totalPages}`;
+        prevBtn.disabled = page <= 1;
+        nextBtn.disabled = page >= totalPages;
+        table.style.display = items.length ? '' : 'none';
+        pager.style.display = items.length > pageSize ? '' : 'none';
+      }
+
+      prevBtn.addEventListener('click', () => {
+        if (resultsState.page > 1) { resultsState.page -= 1; renderResultsPage(); }
+      });
+      nextBtn.addEventListener('click', () => {
+        const totalPages = Math.max(1, Math.ceil(resultsState.items.length / resultsState.pageSize));
+        if (resultsState.page < totalPages) { resultsState.page += 1; renderResultsPage(); }
+      });
+
+      btn.addEventListener('click', async () => {
+        const text = textEl.value || '';
+        tbody.innerHTML = '';
+        table.style.display = 'none';
+        statusEl.textContent = '';
+        statusEl.classList.remove('error');
+        summaryEl.style.display = 'none';
+        summaryEl.textContent = '';
+
+        if (!text.trim()) {
+          statusEl.textContent = 'Lütfen bir metin girin.';
+          statusEl.classList.add('error');
+          return;
+        }
+
+        btn.disabled = true; btn.classList.add('loading');
+        const t0 = performance.now();
+        try {
+          const modelsRes = await fetch('/models/list');
+          if (!modelsRes.ok) throw new Error('Model listesi alınamadı');
+          const models = await modelsRes.json();
+
+          if (!Array.isArray(models) || models.length === 0) {
+            statusEl.textContent = 'Kayıtlı model bulunamadı.';
+            return;
+          }
+
+          const tasks = models.map(async (m) => {
+            try {
+              const res = await fetch('/api/count', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ model: m.name, text })
+              });
+              if (!res.ok) throw new Error('Hesaplama hatası');
+              const data = await res.json();
+              return { name: m.name, tokens: data.tokens };
+            } catch (e) {
+              return { name: m.name, tokens: null, error: true };
+            }
+          });
+
+          const results = await Promise.all(tasks);
+          const okResults = results.filter(r => !r.error);
+          const failResults = results.filter(r => r.error);
+          results.sort((a,b) => (a.name||'').localeCompare(b.name||''));
+
+          resultsState = { items: results, page: 1, pageSize: 10 };
+          renderResultsPage();
+
+          const t1 = performance.now();
+          const ms = Math.max(0, Math.round(t1 - t0));
+          summaryEl.textContent = `${okResults.length} model hesaplandı${failResults.length ? `, ${failResults.length} hata` : ''} • ${ms} ms`;
+          summaryEl.style.display = '';
+        } catch (err) {
+          statusEl.textContent = 'Bir hata oluştu. Lütfen daha sonra tekrar deneyin.';
+        } finally {
+          btn.disabled = false; btn.classList.remove('loading');
+        }
+      });
+    </script>
+  </body>
+ </html>
+
