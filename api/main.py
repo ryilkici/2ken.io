@@ -36,7 +36,7 @@ def get_or_load_tokenizer(model_name: str):
             tokenizer = tiktoken.encoding_for_model(model_name.lower())
 
         else:
-            tokenizer = AutoTokenizer.from_pretrained(model_name, cache_dir=str(MODELS_CACHE_DIR)+"/"+model_name, token="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")
+            tokenizer = AutoTokenizer.from_pretrained(model_name, cache_dir=str(MODELS_CACHE_DIR)+"/"+model_name, token="TOKEN")
 
         tokenizer_cache[model_name] = tokenizer
 
